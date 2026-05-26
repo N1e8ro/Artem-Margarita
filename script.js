@@ -39,6 +39,10 @@ window.addEventListener('load', function() {
 
             updateTimer();
             initRevealAnimations();
+            
+            // Переинициализируем галереи после показа
+            initHorizontalGallery('scroll-container-1');
+            initHorizontalGallery('scroll-container-2');
         }, 600);
     });
 })();
@@ -82,6 +86,10 @@ var revealObserver;
 
 function initRevealAnimations() {
     var revealElements = document.querySelectorAll('.section.reveal');
+
+    if (revealObserver) {
+        revealObserver.disconnect();
+    }
 
     revealObserver = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
@@ -173,7 +181,7 @@ initRevealAnimations();
             }, 3000);
         })
         .catch(function(error) {
-            console.error('Ошибка:', error);
+            console.error('Ошибка fetch:', error);
             
             var xhr = new XMLHttpRequest();
             xhr.open('POST', GOOGLE_FORM_URL, true);
@@ -212,7 +220,7 @@ initRevealAnimations();
     }
 })();
 
-// ===================== TOAST =====================
+// ===================== TOAST УВЕДОМЛЕНИЕ =====================
 function showToast(message) {
     var oldToast = document.querySelector('.custom-toast');
     if (oldToast) oldToast.remove();
@@ -229,6 +237,7 @@ function showToast(message) {
     }, 3200);
 }
 
+// Добавляем CSS-анимации для toast
 if (!document.getElementById('toast-animations')) {
     var styleEl = document.createElement('style');
     styleEl.id = 'toast-animations';
@@ -245,10 +254,14 @@ if (!document.getElementById('toast-animations')) {
     document.head.appendChild(styleEl);
 }
 
-// ===================== ГОРИЗОНТАЛЬНЫЕ ГАЛЕРЕИ =====================
+// ===================== ГОРИЗОНТАЛЬНЫЕ ГАЛЕРЕИ С СУПЕР-ПЛАВНЫМ СКРОЛЛОМ =====================
 function initHorizontalGallery(containerId) {
     var container = document.getElementById(containerId);
     if (!container) return;
+    
+    // Предотвращаем повторную инициализацию
+    if (container.dataset.galleryInitialized === 'true') return;
+    container.dataset.galleryInitialized = 'true';
 
     var wrapper = container.closest('.scroll-wrapper');
     var leftArrow = wrapper ? wrapper.querySelector('.scroll-arrow-left') : null;
@@ -256,8 +269,10 @@ function initHorizontalGallery(containerId) {
     var indicator = wrapper ? wrapper.querySelector('.scroll-indicator-bar') : null;
 
     var scrollAmount = 280;
-    var animationId = null;
-    var velocity = 0;
+
+    // ===== ПЕРЕМЕННЫЕ ДЛЯ ИНЕРЦИИ =====
+    var amplitude = 0;
+    var targetScroll = 0;
     var isDragging = false;
     var startX = 0;
     var startY = 0;
@@ -265,44 +280,45 @@ function initHorizontalGallery(containerId) {
     var lastTime = 0;
     var isSwiping = false;
     var dragStartScrollLeft = 0;
+    var animationId = null;
+    var velocity = 0;
 
-    function applyInertia() {
-        if (Math.abs(velocity) < 0.5) {
-            velocity = 0;
-            cancelAnimationFrame(animationId);
+    // ===== ФУНКЦИЯ ИНЕРЦИОННОЙ АНИМАЦИИ =====
+    function autoScroll() {
+        var elapsed, delta;
+
+        if (amplitude) {
+            elapsed = Date.now() - lastTime;
+            delta = -amplitude * Math.exp(-elapsed / 325);
+
+            if (delta > 0.5 || delta < -0.5) {
+                container.scrollLeft = targetScroll + delta;
+                animationId = requestAnimationFrame(autoScroll);
+            } else {
+                container.scrollLeft = targetScroll;
+                amplitude = 0;
+                animationId = null;
+                updateArrows();
+            }
+        } else {
             animationId = null;
-            updateArrows();
-            return;
         }
-
-        container.scrollLeft -= velocity;
-        velocity *= 0.92;
-
-        if (container.scrollLeft <= 0) {
-            container.scrollLeft = 0;
-            velocity = 0;
-        }
-        var maxScroll = container.scrollWidth - container.clientWidth;
-        if (container.scrollLeft >= maxScroll) {
-            container.scrollLeft = maxScroll;
-            velocity = 0;
-        }
-
-        updateArrows();
-        animationId = requestAnimationFrame(applyInertia);
     }
 
-    function stopInertia() {
+    function stopAnimation() {
         if (animationId) {
             cancelAnimationFrame(animationId);
             animationId = null;
         }
+        amplitude = 0;
         velocity = 0;
     }
 
+    // ===== СОБЫТИЯ МЫШИ (десктоп) =====
     container.addEventListener('mousedown', function(e) {
-        stopInertia();
+        stopAnimation();
         isDragging = true;
+        isSwiping = false;
         startX = e.pageX;
         startY = e.pageY;
         lastX = e.pageX;
@@ -315,19 +331,22 @@ function initHorizontalGallery(containerId) {
 
     window.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
+
         var dx = e.pageX - startX;
         var dy = e.pageY - startY;
-        if (!isSwiping && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        var currentTime = Date.now();
+        var timeDelta = Math.max(currentTime - lastTime, 1);
+
+        if (!isSwiping && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
             isSwiping = Math.abs(dx) > Math.abs(dy);
         }
+
         if (isSwiping) {
             e.preventDefault();
-            var currentTime = Date.now();
-            var timeDelta = currentTime - lastTime;
-            if (timeDelta > 0) {
-                velocity = ((e.pageX - lastX) / timeDelta) * 15;
-            }
+
+            velocity = (e.pageX - lastX) / timeDelta;
             container.scrollLeft = dragStartScrollLeft - dx;
+
             lastX = e.pageX;
             lastTime = currentTime;
             updateArrows();
@@ -339,145 +358,285 @@ function initHorizontalGallery(containerId) {
         isDragging = false;
         container.style.cursor = 'grab';
         container.style.scrollBehavior = 'smooth';
+
         if (isSwiping) {
-            applyInertia();
+            targetScroll = container.scrollLeft;
+            amplitude = velocity * 250;
+
+            var maxAmplitude = 800;
+            if (amplitude > maxAmplitude) amplitude = maxAmplitude;
+            if (amplitude < -maxAmplitude) amplitude = -maxAmplitude;
+
+            lastTime = Date.now();
+            autoScroll();
         }
+
         isSwiping = false;
+        velocity = 0;
     });
 
+    // ===== СОБЫТИЯ КАСАНИЯ (мобильные) =====
     container.addEventListener('touchstart', function(e) {
-        stopInertia();
-        isDragging = true;
+        stopAnimation();
+
         var touch = e.touches[0];
+        isDragging = true;
+        isSwiping = false;
         startX = touch.clientX;
         startY = touch.clientY;
         lastX = touch.clientX;
         lastTime = Date.now();
         dragStartScrollLeft = container.scrollLeft;
-        isSwiping = false;
         container.style.scrollBehavior = 'auto';
     }, { passive: true });
 
     container.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
+
         var touch = e.touches[0];
         var dx = touch.clientX - startX;
         var dy = touch.clientY - startY;
-        if (!isSwiping && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        var currentTime = Date.now();
+        var timeDelta = Math.max(currentTime - lastTime, 1);
+
+        if (!isSwiping && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
             isSwiping = Math.abs(dx) > Math.abs(dy);
         }
+
         if (isSwiping) {
-            if (Math.abs(dx) > Math.abs(dy)) e.preventDefault();
-            var currentTime = Date.now();
-            var timeDelta = currentTime - lastTime;
-            if (timeDelta > 0) {
-                velocity = ((touch.clientX - lastX) / timeDelta) * 15;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                e.preventDefault();
             }
+
+            velocity = (touch.clientX - lastX) / timeDelta;
             container.scrollLeft = dragStartScrollLeft - dx;
+
             lastX = touch.clientX;
             lastTime = currentTime;
             updateArrows();
         }
     }, { passive: false });
 
-    container.addEventListener('touchend', function() {
+    container.addEventListener('touchend', function(e) {
         if (!isDragging) return;
+
+        var touch = e.changedTouches[0];
+        var dx = touch.clientX - startX;
+
         isDragging = false;
-        if (isSwiping) applyInertia();
+
+        if (isSwiping && Math.abs(dx) > 3) {
+            var finalVelocity = (touch.clientX - lastX) / Math.max(Date.now() - lastTime, 1);
+
+            targetScroll = container.scrollLeft;
+            amplitude = finalVelocity * 200;
+
+            var maxAmplitude = 600;
+            if (amplitude > maxAmplitude) amplitude = maxAmplitude;
+            if (amplitude < -maxAmplitude) amplitude = -maxAmplitude;
+
+            lastTime = Date.now();
+            autoScroll();
+        }
+
         isSwiping = false;
+        velocity = 0;
         container.style.scrollBehavior = 'smooth';
+
+        checkBounds();
     }, { passive: true });
 
     container.addEventListener('touchcancel', function() {
         if (isDragging) {
             isDragging = false;
-            if (isSwiping) applyInertia();
             isSwiping = false;
+            velocity = 0;
             container.style.scrollBehavior = 'smooth';
+            checkBounds();
         }
     });
 
-    function smoothScrollBy(distance) {
-        stopInertia();
-        var startScroll = container.scrollLeft;
-        var targetScroll = startScroll + distance;
-        var startTime = performance.now();
-        var duration = 400;
+    // ===== ПРОВЕРКА ГРАНИЦ =====
+    function checkBounds() {
         var maxScroll = container.scrollWidth - container.clientWidth;
-        targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
 
-        function animateScroll(currentTime) {
-            var elapsed = currentTime - startTime;
-            var progress = Math.min(elapsed / duration, 1);
-            var ease = 1 - Math.pow(1 - progress, 3);
-            container.scrollLeft = startScroll + (targetScroll - startScroll) * ease;
-            updateArrows();
-            if (progress < 1) requestAnimationFrame(animateScroll);
+        if (container.scrollLeft < 0) {
+            smoothScrollTo(0);
+        } else if (container.scrollLeft > maxScroll) {
+            smoothScrollTo(maxScroll);
         }
-        requestAnimationFrame(animateScroll);
     }
 
-    if (leftArrow) leftArrow.addEventListener('click', function() { smoothScrollBy(-scrollAmount); });
-    if (rightArrow) rightArrow.addEventListener('click', function() { smoothScrollBy(scrollAmount); });
+    function smoothScrollTo(target) {
+        var startScroll = container.scrollLeft;
+        var distance = target - startScroll;
+        var startTime = performance.now();
+        var duration = 300;
 
+        function animate(currentTime) {
+            var elapsed = currentTime - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+            var ease = 1 - Math.pow(1 - progress, 4);
+
+            container.scrollLeft = startScroll + distance * ease;
+            updateArrows();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // ===== СТРЕЛКИ =====
+    function smoothScrollBy(distance) {
+        stopAnimation();
+
+        var startScroll = container.scrollLeft;
+        var target = startScroll + distance;
+        var maxScroll = container.scrollWidth - container.clientWidth;
+        target = Math.max(0, Math.min(target, maxScroll));
+
+        var startTime = performance.now();
+        var duration = 500;
+
+        function animate(currentTime) {
+            var elapsed = currentTime - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+            var ease = progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+            container.scrollLeft = startScroll + (target - startScroll) * ease;
+            updateArrows();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    if (leftArrow) {
+        leftArrow.addEventListener('click', function() {
+            smoothScrollBy(-scrollAmount);
+        });
+    }
+
+    if (rightArrow) {
+        rightArrow.addEventListener('click', function() {
+            smoothScrollBy(scrollAmount);
+        });
+    }
+
+    // ===== ИНДИКАТОР =====
     if (indicator) {
         indicator.style.display = 'block';
         indicator.style.transition = 'opacity 0.5s ease';
-        var hideTimeout;
+
+        var hideIndicatorTimeout;
+        var indicatorVisible = true;
+
+        function showIndicator() {
+            if (!indicatorVisible) {
+                indicator.style.display = 'block';
+                indicator.style.opacity = '1';
+                indicatorVisible = true;
+            }
+            clearTimeout(hideIndicatorTimeout);
+        }
+
+        function hideIndicator() {
+            indicator.style.opacity = '0';
+            indicatorVisible = false;
+            hideIndicatorTimeout = setTimeout(function() {
+                indicator.style.display = 'none';
+            }, 500);
+        }
+
         container.addEventListener('scroll', function() {
-            if (container.scrollLeft > 20) {
-                indicator.style.opacity = '0';
-                clearTimeout(hideTimeout);
-                hideTimeout = setTimeout(function() { indicator.style.display = 'none'; }, 500);
+            if (container.scrollLeft > 30) {
+                hideIndicator();
             }
         });
-        container.addEventListener('touchstart', function() {
-            indicator.style.display = 'block';
-            indicator.style.opacity = '1';
-            clearTimeout(hideTimeout);
-        });
+
+        container.addEventListener('touchstart', showIndicator);
+        container.addEventListener('mousedown', showIndicator);
     }
 
+    // ===== ОБНОВЛЕНИЕ СТРЕЛОК =====
     function updateArrows() {
         if (leftArrow) {
-            leftArrow.style.opacity = container.scrollLeft <= 0 ? '0.3' : '1';
-            leftArrow.style.pointerEvents = container.scrollLeft <= 0 ? 'none' : 'auto';
+            var atStart = container.scrollLeft <= 1;
+            leftArrow.style.opacity = atStart ? '0.3' : '1';
+            leftArrow.style.pointerEvents = atStart ? 'none' : 'auto';
+            leftArrow.style.transition = 'opacity 0.3s ease';
         }
         if (rightArrow) {
             var maxScroll = container.scrollWidth - container.clientWidth;
-            rightArrow.style.opacity = container.scrollLeft >= maxScroll - 5 ? '0.3' : '1';
-            rightArrow.style.pointerEvents = container.scrollLeft >= maxScroll - 5 ? 'none' : 'auto';
+            var atEnd = container.scrollLeft >= maxScroll - 1;
+            rightArrow.style.opacity = atEnd ? '0.3' : '1';
+            rightArrow.style.pointerEvents = atEnd ? 'none' : 'auto';
+            rightArrow.style.transition = 'opacity 0.3s ease';
         }
     }
 
+    // ===== GPU-УСКОРЕНИЕ =====
     container.style.webkitOverflowScrolling = 'touch';
     container.style.overflowX = 'auto';
     container.style.overflowY = 'hidden';
     container.style.scrollBehavior = 'smooth';
     container.style.cursor = 'grab';
     container.style.willChange = 'scroll-position';
+    container.style.transform = 'translateZ(0)';
+    container.style.backfaceVisibility = 'hidden';
+    container.style.perspective = '1000px';
 
     if (window.innerWidth <= 768) {
         container.style.scrollbarWidth = 'none';
         container.style.msOverflowStyle = 'none';
     }
 
-    window.addEventListener('resize', updateArrows);
-    setTimeout(updateArrows, 100);
-
+    // ===== КОЛЁСИКО МЫШИ =====
     container.addEventListener('wheel', function(e) {
         if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
             e.preventDefault();
-            container.scrollLeft += e.deltaX;
+            smoothScrollBy(e.deltaX * 1.5);
         }
     }, { passive: false });
+
+    // ===== КЛАВИАТУРА =====
+    container.setAttribute('tabindex', '0');
+    container.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            smoothScrollBy(-scrollAmount);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            smoothScrollBy(scrollAmount);
+        }
+    });
+
+    // ===== АДАПТИВНОСТЬ =====
+    window.addEventListener('resize', function() {
+        updateArrows();
+        checkBounds();
+    });
+
+    setTimeout(function() {
+        updateArrows();
+    }, 100);
 }
 
+// ===== ИНИЦИАЛИЗАЦИЯ ГАЛЕРЕЙ =====
 document.addEventListener('DOMContentLoaded', function() {
     initHorizontalGallery('scroll-container-1');
     initHorizontalGallery('scroll-container-2');
 });
 
+// Резервная инициализация
 setTimeout(function() {
     if (!window.galleriesInitialized) {
         initHorizontalGallery('scroll-container-1');
