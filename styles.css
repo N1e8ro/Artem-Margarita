@@ -364,10 +364,7 @@ h2 {
     background: var(--card);
 }
 
-.container kali img {
-    justify-content: center;
-    
-}
+
 
 /* ===== 3. COUNTDOWN ===== */
 #countdown {
