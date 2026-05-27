@@ -97,7 +97,8 @@ body {
     font-size: 18px;
     margin-bottom: 30px;
     color: #59191f;
-    font-family: Gwandalyn, cursive;
+    line-height: 1.2;
+    font-family: 'Gwandalyn', sans-serif;
 }
 
 #collage-page.hidden-page {
@@ -197,8 +198,8 @@ body {
     background: #59191f;
     
     color: #ffffff;
-    font-family: Gwendolyn, cursive;
-    font-size: 1.1rem;
+    font-family: 'Gwendolyn', sans-serif;
+    font-size: 1.3rem;
     padding: 14px 32px;
     border-radius: 40px;
     letter-spacing: 1.5px;
@@ -364,7 +365,10 @@ h2 {
     background: var(--card);
 }
 
-
+.container kali img {
+    justify-content: center;
+    
+}
 
 /* ===== 3. COUNTDOWN ===== */
 #countdown {
@@ -528,6 +532,15 @@ h2 {
     color: #AC8C8F;
     margin-bottom: 24px;
 }
+.kalend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.kali img {
+    max-width: 100%;
+}
 
 .color-palette {
     display: flex;
@@ -583,16 +596,6 @@ h2 {
     gap: 16px;
     padding: 0 4px;
     width: max-content;
-}
-
-.kalend {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;
-}
-.kali img {
-    max-width: 100%;
 }
 
 .scroll-item {
