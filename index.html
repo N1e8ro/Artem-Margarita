@@ -73,10 +73,7 @@
         <div class="priv"><h1>Этот день станет для нас поистине незабываемым, и мы мечтаем провести его рядом с Вами.
 <br>Приглашаем Вас присоединиться к нашей свадьбе и украсить ее своим присутствием!</h1></div>
         <div class="section-label"></div>
-        <div class="kalend" style="display: flex;
-    justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;">
+        <div class="kalend">
             <div class="kali"><img src="Images/kal.png" alt="Женский образ"></div>
         </div>
     </div>
@@ -291,17 +288,21 @@
                 <label>Имена и фамилии ваших гостей</label>
                 <textarea rows="2" placeholder="Иванов Иван, Петрова Мария..."></textarea>
             </div>
+            
+            <!-- ====== ИСПРАВЛЕННЫЕ ЧЕКБОКСЫ ====== -->
+            <!-- ВАЖНО: value должен ТОЧНО совпадать с вариантами в Google Form! -->
             <div class="drinks-section">
                 <h3>Предпочтения по напиткам</h3>
                 <div class="drinks-grid">
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="champagne"><span> Шампанское</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="wine_red"><span> Вино красное</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="wine_white"><span> Вино белое</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="whiskey"><span> Виски</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="juice"><span> Коньяк</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="water"><span> Водка</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Шампанское"><span> Шампанское</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино красное"><span> Вино красное</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино белое"><span> Вино белое</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Виски"><span> Виски</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Коньяк"><span> Коньяк</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Водка"><span> Водка</span></label>
                 </div>
             </div>
+            
             <button type="submit" class="submit-btn">
                 <span>Отправить</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
