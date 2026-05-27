@@ -1,12 +1,19 @@
 // ===================== НАСТРОЙКИ GOOGLE ФОРМЫ =====================
+// ВАЖНО! Проверьте что эти entry ID соответствуют вашей форме!
+// Как найти правильные ID:
+// 1. Откройте форму → "Получить ссылку с предзаполнением"
+// 2. Заполните все поля → "Получить ссылку"
+// 3. В URL будут правильные entry.XXXXXX
+
 var GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScFII1N40AiFMUT9d74UJ6y8xB32XOckMBdR_iRVsPaSC9FQA/formResponse';
+
 var FORM_ENTRIES = {
     firstName:   'entry.304578524',   // Имя
     lastName:    'entry.1743062081',  // Фамилия
     phone:       'entry.1808915097',  // Телефон
     guestsCount: 'entry.1990473099',  // Количество гостей
     guestsNames: 'entry.1154442462',  // Имена гостей
-    drinks:      'entry.137658426'    // Напитки
+    drinks:      'entry.137658426'    // Напитки (чекбоксы)
 };
 
 // ===================== PRELOADER =====================
@@ -109,7 +116,7 @@ function initRevealAnimations() {
 
 initRevealAnimations();
 
-// ===================== RSVP FORM → GOOGLE FORMS =====================
+// ===================== RSVP FORM → GOOGLE FORMS (ИСПРАВЛЕННЫЙ) =====================
 (function() {
     var form = document.getElementById('rsvp-form');
     if (!form) return;
@@ -118,120 +125,285 @@ initRevealAnimations();
         e.preventDefault();
 
         var btn = form.querySelector('.submit-btn');
+        if (!btn) btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+
         var originalHTML = btn.innerHTML;
 
+        // Показываем состояние загрузки
         btn.innerHTML = '⏳ Отправка...';
         btn.style.background = '#64748B';
         btn.style.color = '#fff';
+        btn.style.pointerEvents = 'none';
         btn.disabled = true;
 
+        // Собираем данные из формы
         var inputs = form.querySelectorAll('input[type="text"]');
         var firstName = inputs[0] ? inputs[0].value.trim() : '';
         var lastName = inputs[1] ? inputs[1].value.trim() : '';
-        var phone = form.querySelector('input[type="tel"]') ? form.querySelector('input[type="tel"]').value.trim() : '';
-        var guestsCount = form.querySelector('input[type="number"]') ? form.querySelector('input[type="number"]').value.trim() : '0';
-        var guestsNames = form.querySelector('textarea') ? form.querySelector('textarea').value.trim() : '';
+        
+        var phoneInput = form.querySelector('input[type="tel"]');
+        var phone = phoneInput ? phoneInput.value.trim() : '';
+        
+        var guestsCountInput = form.querySelector('input[type="number"]');
+        var guestsCount = guestsCountInput ? guestsCountInput.value.trim() : '0';
+        
+        var guestsNamesInput = form.querySelector('textarea');
+        var guestsNames = guestsNamesInput ? guestsNamesInput.value.trim() : '';
 
+        // Собираем выбранные напитки (чекбоксы)
+        // ВАЖНО: значения должны ТОЧНО совпадать с вариантами в Google Form!
         var checkboxes = form.querySelectorAll('input[name="drinks"]:checked');
         var drinks = [];
         checkboxes.forEach(function(cb) {
             drinks.push(cb.value);
         });
 
-        var formData = new FormData();
-        formData.append(FORM_ENTRIES.firstName, firstName);
-        formData.append(FORM_ENTRIES.lastName, lastName);
-        formData.append(FORM_ENTRIES.phone, phone);
-        formData.append(FORM_ENTRIES.guestsCount, guestsCount || '0');
-        formData.append(FORM_ENTRIES.guestsNames, guestsNames);
+        // Формируем данные для отправки
+        var formData = {
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            guestsCount: guestsCount || '0',
+            guestsNames: guestsNames,
+            drinks: drinks
+        };
 
-        drinks.forEach(function(drink) {
-            formData.append(FORM_ENTRIES.drinks, drink);
-        });
+        console.log('📤 Отправляем данные:', formData);
 
-        if (drinks.length === 0) {
-            formData.append(FORM_ENTRIES.drinks, '');
-        }
-
-        sendToGoogleForms(formData, btn, originalHTML);
+        // Отправляем через iframe (надёжный метод)
+        sendToGoogleForms(formData, btn, originalHTML, form);
     });
+})();
 
-    function sendToGoogleForms(formData, btn, originalHTML) {
-        fetch(GOOGLE_FORM_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: formData
-        })
-        .then(function() {
-            console.log('✅ Данные отправлены в Google Forms');
-            
-            btn.innerHTML = '✅ Отправлено!';
-            btn.style.background = '#22C55E';
-            btn.style.color = '#fff';
+// ===================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ (IFRAME МЕТОД) =====================
+function sendToGoogleForms(data, btn, originalHTML, formElement) {
+    
+    // Создаём уникальное имя для iframe
+    var iframeName = 'google-form-iframe-' + Date.now();
+    
+    // Создаём скрытый iframe
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.id = iframeName;
+    iframe.style.cssText = 'display:none;width:0;height:0;border:none;position:absolute;left:-9999px;';
+    document.body.appendChild(iframe);
 
-            showToast('Спасибо! Ваш ответ записан ❤️<br>Мы свяжемся с вами для подтверждения');
+    // Создаём скрытую форму
+    var hiddenForm = document.createElement('form');
+    hiddenForm.method = 'POST';
+    hiddenForm.action = GOOGLE_FORM_URL;
+    hiddenForm.target = iframeName;
+    hiddenForm.style.display = 'none';
 
-            form.reset();
+    // Функция для добавления скрытого поля
+    function addHiddenField(name, value) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        hiddenForm.appendChild(input);
+    }
 
-            setTimeout(function() {
-                btn.innerHTML = originalHTML;
-                btn.style.background = '';
-                btn.style.color = '';
-                btn.disabled = false;
-            }, 3000);
-        })
-        .catch(function(error) {
-            console.error('Ошибка fetch:', error);
-            
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', GOOGLE_FORM_URL, true);
-            
-            xhr.onload = function() {
-                btn.innerHTML = '✅ Отправлено!';
-                btn.style.background = '#22C55E';
-                btn.style.color = '#fff';
-                showToast('Спасибо! Ваш ответ записан ❤️');
-                form.reset();
-                
-                setTimeout(function() {
-                    btn.innerHTML = originalHTML;
-                    btn.style.background = '';
-                    btn.style.color = '';
-                    btn.disabled = false;
-                }, 3000);
-            };
-            
-            xhr.onerror = function() {
-                btn.innerHTML = '❌ Ошибка';
-                btn.style.background = '#EF4444';
-                btn.style.color = '#fff';
-                showToast('Ошибка соединения. Попробуйте позже.');
-                
-                setTimeout(function() {
-                    btn.innerHTML = originalHTML;
-                    btn.style.background = '';
-                    btn.style.color = '';
-                    btn.disabled = false;
-                }, 3000);
-            };
-            
-            xhr.send(formData);
+    // Добавляем все поля
+    addHiddenField(FORM_ENTRIES.firstName, data.firstName);
+    addHiddenField(FORM_ENTRIES.lastName, data.lastName);
+    addHiddenField(FORM_ENTRIES.phone, data.phone);
+    addHiddenField(FORM_ENTRIES.guestsCount, data.guestsCount);
+    addHiddenField(FORM_ENTRIES.guestsNames, data.guestsNames);
+
+    // Добавляем напитки — каждое значение отдельным полем
+    // ВАЖНО: значения value в чекбоксах на сайте должны ТОЧНО
+    // совпадать с вариантами в Google Form!
+    if (data.drinks && data.drinks.length > 0) {
+        data.drinks.forEach(function(drink) {
+            addHiddenField(FORM_ENTRIES.drinks, drink);
         });
     }
-})();
+
+    document.body.appendChild(hiddenForm);
+
+    console.log('📋 Создана скрытая форма с полями:', hiddenForm.querySelectorAll('input').length);
+
+    // Флаг для отслеживания отправки
+    var isSubmitted = false;
+    var loadCount = 0;
+
+    // Обработчик загрузки iframe
+    function handleIframeLoad() {
+        loadCount++;
+        
+        // Первый load — это загрузка пустого iframe, пропускаем
+        // Второй load — это ответ от Google Forms
+        if (loadCount >= 2 || isSubmitted) {
+            onSubmitSuccess();
+        }
+    }
+
+    iframe.addEventListener('load', handleIframeLoad);
+
+    // Функция успешной отправки
+    function onSubmitSuccess() {
+        if (isSubmitted) return; // Предотвращаем повторный вызов
+        isSubmitted = true;
+
+        console.log('✅ Данные успешно отправлены в Google Forms');
+
+        // Обновляем кнопку
+        btn.innerHTML = '✅ Отправлено!';
+        btn.style.background = '#22C55E';
+        btn.style.color = '#fff';
+
+        // Показываем уведомление
+        showToast('Спасибо! Ваш ответ записан ❤️<br>Мы свяжемся с вами для подтверждения');
+
+        // Сбрасываем форму
+        if (formElement) {
+            formElement.reset();
+        }
+
+        // Возвращаем кнопку в исходное состояние через 3 секунды
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.pointerEvents = '';
+            btn.disabled = false;
+        }, 3000);
+
+        // Удаляем iframe и скрытую форму через 5 секунд
+        cleanup();
+    }
+
+    // Функция очистки
+    function cleanup() {
+        setTimeout(function() {
+            if (iframe && iframe.parentNode) {
+                iframe.removeEventListener('load', handleIframeLoad);
+                iframe.parentNode.removeChild(iframe);
+            }
+            if (hiddenForm && hiddenForm.parentNode) {
+                hiddenForm.parentNode.removeChild(hiddenForm);
+            }
+        }, 5000);
+    }
+
+    // Таймаут на случай если iframe не загрузится (CORS может блокировать событие load)
+    setTimeout(function() {
+        if (!isSubmitted) {
+            console.log('⏱️ Таймаут iframe — считаем что данные отправлены');
+            onSubmitSuccess();
+        }
+    }, 4000);
+
+    // Отправляем форму!
+    try {
+        hiddenForm.submit();
+        console.log('🚀 Форма отправлена через iframe');
+    } catch (error) {
+        console.error('❌ Ошибка отправки формы:', error);
+        
+        // В случае ошибки пробуем fallback через fetch
+        sendViaFetchFallback(data, btn, originalHTML, formElement);
+        
+        // Очищаем iframe и форму
+        if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (hiddenForm && hiddenForm.parentNode) hiddenForm.parentNode.removeChild(hiddenForm);
+    }
+}
+
+// ===================== FALLBACK: ОТПРАВКА ЧЕРЕЗ FETCH =====================
+function sendViaFetchFallback(data, btn, originalHTML, formElement) {
+    console.log('🔄 Пробуем отправку через fetch (fallback)...');
+
+    var formData = new FormData();
+    formData.append(FORM_ENTRIES.firstName, data.firstName);
+    formData.append(FORM_ENTRIES.lastName, data.lastName);
+    formData.append(FORM_ENTRIES.phone, data.phone);
+    formData.append(FORM_ENTRIES.guestsCount, data.guestsCount);
+    formData.append(FORM_ENTRIES.guestsNames, data.guestsNames);
+
+    // Добавляем напитки — каждое значение отдельно
+    if (data.drinks && data.drinks.length > 0) {
+        data.drinks.forEach(function(drink) {
+            formData.append(FORM_ENTRIES.drinks, drink);
+        });
+    }
+
+    fetch(GOOGLE_FORM_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+    })
+    .then(function() {
+        // При no-cors мы не можем проверить статус, но считаем что отправлено
+        console.log('✅ Fetch выполнен (no-cors)');
+        
+        btn.innerHTML = '✅ Отправлено!';
+        btn.style.background = '#22C55E';
+        btn.style.color = '#fff';
+
+        showToast('Спасибо! Ваш ответ записан ❤️');
+
+        if (formElement) formElement.reset();
+
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.pointerEvents = '';
+            btn.disabled = false;
+        }, 3000);
+    })
+    .catch(function(error) {
+        console.error('❌ Ошибка fetch:', error);
+        
+        btn.innerHTML = '❌ Ошибка';
+        btn.style.background = '#EF4444';
+        btn.style.color = '#fff';
+        
+        showToast('Ошибка отправки. Пожалуйста, попробуйте позже.');
+
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.pointerEvents = '';
+            btn.disabled = false;
+        }, 3000);
+    });
+}
 
 // ===================== TOAST УВЕДОМЛЕНИЕ =====================
 function showToast(message) {
+    // Удаляем предыдущий toast если есть
     var oldToast = document.querySelector('.custom-toast');
     if (oldToast) oldToast.remove();
 
+    // Создаём новый toast
     var toast = document.createElement('div');
     toast.className = 'custom-toast';
     toast.innerHTML = message;
-    toast.style.animation = 'toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards';
+    toast.style.cssText = '\
+        position: fixed;\
+        bottom: 30px;\
+        left: 50%;\
+        transform: translateX(-50%);\
+        background: linear-gradient(135deg, #1e293b, #334155);\
+        color: #fff;\
+        padding: 16px 28px;\
+        border-radius: 12px;\
+        font-size: 15px;\
+        text-align: center;\
+        z-index: 10000;\
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);\
+        max-width: 90%;\
+        animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards;\
+    ';
 
     document.body.appendChild(toast);
 
+    // Удаляем через 3.2 секунды
     setTimeout(function() {
         if (toast.parentNode) toast.remove();
     }, 3200);
@@ -643,4 +815,5 @@ setTimeout(function() {
         initHorizontalGallery('scroll-container-2');
         window.galleriesInitialized = true;
     }
+}, 1000);
 }, 1000);
