@@ -415,7 +415,7 @@
             display: block;
             font-size: 2rem;
             font-weight: 700;
-            color: #AC8C8F;
+            color: #fffffF;
         }
 
         .timer-item small {
@@ -1012,7 +1012,7 @@
 <!-- ===== 1. HERO ===== -->
 <section id="hero">
     <div class="hero-bg">
-        <img src="Images/fon.webp" alt="" class="hero-img" width="1920" height="1080" decoding="async">
+        <img src="Images/fon.webp" alt="Свадебный фон" class="hero-img" width="1920" height="1080" decoding="async">
         <div class="hero-overlay"></div>
     </div>
     <div class="hero-content">
@@ -1400,7 +1400,7 @@ function initRevealAnimations() {
 
 initRevealAnimations();
 
-// ===================== ГОРИЗОНТАЛЬНЫЕ ГАЛЕРЕИ (минимальная версия) =====================
+// ===================== ГОРИЗОНТАЛЬНЫЕ ГАЛЕРЕИ (с плавным скроллом) =====================
 function initGalleries() {
     var galleries = ['scroll-container-1', 'scroll-container-2'];
     
@@ -1413,38 +1413,201 @@ function initGalleries() {
 
         var leftBtn = wrapper.querySelector('.scroll-arrow-left');
         var rightBtn = wrapper.querySelector('.scroll-arrow-right');
+        var scrollAmount = 280;
+
+        // Переменные для отслеживания скролла
+        var isDragging = false;
+        var startX = 0;
+        var startScrollLeft = 0;
+        var velocity = 0;
+        var lastX = 0;
+        var lastTime = Date.now();
+        var animationFrameId = null;
+
+        // ===== ПЛАВНЫЙ СКРОЛЛ ЧЕРЕЗ КНОПКИ =====
+        var smoothScrollTo = function(target) {
+            var start = container.scrollLeft;
+            var distance = target - start;
+            var startTime = performance.now();
+            var duration = 500;
+
+            var animate = function(currentTime) {
+                var elapsed = currentTime - startTime;
+                var progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function (ease-out-cubic)
+                var ease = 1 - Math.pow(1 - progress, 3);
+                container.scrollLeft = start + distance * ease;
+                
+                updateScrollArrows(container, leftBtn, rightBtn);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        };
 
         if (leftBtn) {
             leftBtn.addEventListener('click', function() {
-                container.scrollLeft -= 280;
+                var target = Math.max(0, container.scrollLeft - scrollAmount);
+                smoothScrollTo(target);
             });
         }
 
         if (rightBtn) {
             rightBtn.addEventListener('click', function() {
-                container.scrollLeft += 280;
+                var maxScroll = container.scrollWidth - container.clientWidth;
+                var target = Math.min(maxScroll, container.scrollLeft + scrollAmount);
+                smoothScrollTo(target);
             });
         }
 
-        // Обновляем стрелки при скролле
+        // ===== DRAG & SWIPE (мышь) =====
+        container.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            startX = e.pageX;
+            startScrollLeft = container.scrollLeft;
+            lastX = e.pageX;
+            lastTime = Date.now();
+            container.style.cursor = 'grabbing';
+            container.style.scrollBehavior = 'auto';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+
+            var diff = e.pageX - startX;
+            container.scrollLeft = startScrollLeft - diff;
+            
+            var currentTime = Date.now();
+            var timeDelta = Math.max(currentTime - lastTime, 1);
+            velocity = (e.pageX - lastX) / timeDelta;
+            
+            lastX = e.pageX;
+            lastTime = currentTime;
+
+            updateScrollArrows(container, leftBtn, rightBtn);
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (!isDragging) return;
+            isDragging = false;
+            container.style.cursor = 'grab';
+            container.style.scrollBehavior = 'smooth';
+
+            // Инерция при свайпе
+            if (Math.abs(velocity) > 0.5) {
+                var targetScroll = container.scrollLeft - velocity * 200;
+                var maxScroll = container.scrollWidth - container.clientWidth;
+                targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+                smoothScrollTo(targetScroll);
+            }
+        });
+
+        // ===== TOUCH EVENTS (мобильные) =====
+        var touchStartX = 0;
+        var touchStartScroll = 0;
+
+        container.addEventListener('touchstart', function(e) {
+            var touch = e.touches[0];
+            isDragging = true;
+            touchStartX = touch.clientX;
+            touchStartScroll = container.scrollLeft;
+            lastX = touch.clientX;
+            lastTime = Date.now();
+            container.style.scrollBehavior = 'auto';
+        }, { passive: true });
+
+        container.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+
+            var touch = e.touches[0];
+            var diff = touch.clientX - touchStartX;
+            container.scrollLeft = touchStartScroll - diff;
+            
+            var currentTime = Date.now();
+            var timeDelta = Math.max(currentTime - lastTime, 1);
+            velocity = (touch.clientX - lastX) / timeDelta;
+            
+            lastX = touch.clientX;
+            lastTime = currentTime;
+
+            updateScrollArrows(container, leftBtn, rightBtn);
+        }, { passive: true });
+
+        container.addEventListener('touchend', function(e) {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // Инерция при свайпе на мобильных
+            if (Math.abs(velocity) > 0.5) {
+                var targetScroll = container.scrollLeft - velocity * 150;
+                var maxScroll = container.scrollWidth - container.clientWidth;
+                targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+                smoothScrollTo(targetScroll);
+            }
+
+            container.style.scrollBehavior = 'smooth';
+            updateScrollArrows(container, leftBtn, rightBtn);
+        }, { passive: true });
+
+        // ===== КОЛЁСИКО МЫШИ =====
+        container.addEventListener('wheel', function(e) {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                e.preventDefault();
+                container.scrollLeft += e.deltaX * 1.2;
+                updateScrollArrows(container, leftBtn, rightBtn);
+            }
+        }, { passive: false });
+
+        // ===== КЛАВИШИ СТРЕЛОК =====
+        container.setAttribute('tabindex', '0');
+        container.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                var target = Math.max(0, container.scrollLeft - scrollAmount);
+                smoothScrollTo(target);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                var maxScroll = container.scrollWidth - container.clientWidth;
+                var target = Math.min(maxScroll, container.scrollLeft + scrollAmount);
+                smoothScrollTo(target);
+            }
+        });
+
+        // Инициализация стрелок
+        updateScrollArrows(container, leftBtn, rightBtn);
+
+        // Обновление при скролле
         container.addEventListener('scroll', function() {
             updateScrollArrows(container, leftBtn, rightBtn);
         });
 
-        updateScrollArrows(container, leftBtn, rightBtn);
+        // Обновление при изменении размера окна
+        window.addEventListener('resize', function() {
+            updateScrollArrows(container, leftBtn, rightBtn);
+        });
     });
 }
 
 function updateScrollArrows(container, leftBtn, rightBtn) {
+    var maxScroll = container.scrollWidth - container.clientWidth;
+    var atStart = container.scrollLeft <= 1;
+    var atEnd = container.scrollLeft >= maxScroll - 1;
+
     if (leftBtn) {
-        leftBtn.style.opacity = container.scrollLeft <= 1 ? '0.3' : '1';
-        leftBtn.style.pointerEvents = container.scrollLeft <= 1 ? 'none' : 'auto';
+        leftBtn.style.opacity = atStart ? '0.3' : '1';
+        leftBtn.style.pointerEvents = atStart ? 'none' : 'auto';
     }
     
     if (rightBtn) {
-        var maxScroll = container.scrollWidth - container.clientWidth;
-        rightBtn.style.opacity = container.scrollLeft >= maxScroll - 1 ? '0.3' : '1';
-        rightBtn.style.pointerEvents = container.scrollLeft >= maxScroll - 1 ? 'none' : 'auto';
+        rightBtn.style.opacity = atEnd ? '0.3' : '1';
+        rightBtn.style.pointerEvents = atEnd ? 'none' : 'auto';
     }
 }
 
