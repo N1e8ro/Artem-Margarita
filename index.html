@@ -4,11 +4,968 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Артём & Маргарита — Современное приглашение</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Preconnect для быстрого подключения -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gwendolyn:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Объединённый запрос всех шрифтов (вместо 3 отдельных) -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600;700&family=Gwendolyn:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Preload для критичных изображений (hero) -->
+    <link rel="preload" as="image" href="Images/fon.webp" importance="high">
+    <link rel="preload" as="image" href="Images/kal.webp" importance="high">
+    
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #59191F;
+            --accent: #FEFCFF;
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --card-border: #E2E8F0;
+            --text: #59191F;
+            --text-light: #64748B;
+            --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+            --shadow-hover: 0 8px 40px rgba(15, 23, 42, 0.15);
+            --radius: 16px;
+            --radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ===== PRELOADER ===== */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease;
+        }
+
+        #preloader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            display: flex;
+            gap: 6px;
+        }
+
+        .loader span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: dot-bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loader span:nth-child(1) { animation-delay: -0.32s; }
+        .loader span:nth-child(2) { animation-delay: -0.16s; }
+        .loader span:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes dot-bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* ===== 0. COLLAGE PAGE ===== */
+        #collage-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fefcf8;
+            padding: 20px;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        #collage-page.hidden-page {
+            opacity: 0;
+            transform: scale(0.96);
+            max-height: 0;
+            overflow: hidden;
+            padding: 0;
+            pointer-events: none;
+        }
+
+        .collage-container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.06);
+            border-radius: 32px;
+            padding: 25px 20px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(200, 180, 160, 0.3);
+            background: #fefcf8;
+        }
+
+        .collage-label {
+            font-family: "Gwendolyn", cursive;
+            font-size: 40px;
+            color: #59191F;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            font-weight: 400;
+            font-style: normal;
+            text-align: center;
+        }
+
+        .txtcol p {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #59191f;
+            line-height: 1.2;
+            font-family: 'Gwendolyn', sans-serif;
+        }
+
+        /* Сетка для хаотичного коллажа */
+        .collage-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-auto-rows: 75px;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        /* Карточки фотографий */
+        .photo-card {
+            border-radius: 12px;
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 3px solid #fff;
+            cursor: default;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background-color: #e8d9cc;
+        }
+
+        .photo-card:hover {
+            transform: scale(1.03) !important;
+            box-shadow: 4px 8px 20px rgba(0, 0, 0, 0.22);
+            z-index: 2;
+        }
+
+        /* Разные размеры и повороты для хаотичности */
+        .photo-card:nth-child(1)  { grid-column: span 3; grid-row: span 2; transform: rotate(-2deg); }
+        .photo-card:nth-child(2)  { grid-column: span 3; grid-row: span 2; transform: rotate(1.5deg); }
+        .photo-card:nth-child(3)  { grid-column: span 2; grid-row: span 2; transform: rotate(-3deg); }
+        .photo-card:nth-child(4)  { grid-column: span 2; grid-row: span 2; transform: rotate(2deg); }
+
+        /* Кнопка открыть приглашение */
+        .collage-btn {
+            background: #59191f;
+            color: #ffffff;
+            font-family: 'Gwendolyn', sans-serif;
+            font-size: 1.3rem;
+            padding: 14px 32px;
+            border-radius: 40px;
+            letter-spacing: 1.5px;
+            box-shadow: 0 8px 18px rgba(150, 120, 90, 0.25);
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
+            margin-top: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: 500;
+            width: fit-content;
+        }
+
+        .collage-btn:hover {
+            background: #7a1f29;
+            box-shadow: 0 12px 22px rgba(130, 100, 70, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ===== TYPOGRAPHY ===== */
+        h1, h2, h3 {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .section-label p {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #59191f;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+
+        /* ===== SECTION ===== */
+        .section {
+            padding: 60px 0;
+        }
+
+        .section.reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .section.reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .priv h1 {
+            font-size: 20px;
+        }
+
+        /* ===== 1. HERO ===== */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(89, 25, 31, 0.6);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 40px 20px;
+            color: #fff;
+        }
+
+        .nach h1 {
+            line-height: 0.5;
+            font-family: var(--font-serif);
+            font-size: 3.5rem;
+        }
+
+        .sim p {
+            color: rgba(172, 140, 143, 1);
+            margin-top: 5px;
+            font-size: 2em;
+            font-family: var(--font-serif);
+        }
+
+        .hero-label {
+            display: inline-block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border: 2px solid rgba(172, 140, 143, 1);
+            padding: 6px 18px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            color: var(--accent);
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            font-weight: 300;
+            margin-top: 25px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .hero-divider {
+            width: 60px;
+            height: 1px;
+            background: var(--accent);
+            margin: 16px auto;
+        }
+
+        .hero-date {
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 32px;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            padding: 14px 40px;
+            background: var(--accent);
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            will-change: transform;
+        }
+
+        .hero-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        /* ===== 2. STORY ===== */
+        #story {
+            background: var(--card);
+        }
+
+        .kalend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .kali img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* ===== 3. COUNTDOWN ===== */
+        #countdown {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        #countdown h2 {
+            color: #fff;
+        }
+
+        #timer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-item {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 20px;
+            border-radius: 12px;
+            min-width: 70px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .timer-item span {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #AC8C8F;
+        }
+
+        .timer-item small {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+
+        /* ===== 4. VENUE ===== */
+        .venue-card {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .venue-info {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .venue-info h3 {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .venue-info p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+        }
+
+        .venue-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background 0.3s, color 0.3s, transform 0.3s;
+        }
+
+        .venue-btn:hover {
+            background: #D4AF37;
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .venue-map iframe {
+            width: 100%;
+            height: 200px;
+            display: block;
+            border: none;
+        }
+
+        /* ===== 5. SCHEDULE ===== */
+        .schedule-timeline {
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .schedule-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--card-border);
+            transform: translateX(-50%);
+        }
+
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            position: relative;
+        }
+
+        .schedule-item::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            background: #D4AF37;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid var(--bg);
+        }
+
+        .schedule-time {
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            width: 45%;
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        .schedule-desc {
+            width: 45%;
+            padding-left: 20px;
+        }
+
+        .schedule-desc span {
+            display: block;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .schedule-desc small {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* ===== 6. DRESS CODE ===== */
+        .dress-sub {
+            text-align: center;
+            color: #AC8C8F;
+            margin-bottom: 24px;
+        }
+
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .color img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .dress p {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        /* ===== HORIZONTAL GALLERY ===== */
+        .scroll-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .scroll-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            padding: 10px 0 20px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #D4AF37 transparent;
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+            will-change: scroll-position;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 10px;
+        }
+
+        .scroll-track {
+            display: flex;
+            gap: 16px;
+            padding: 0 4px;
+            width: max-content;
+        }
+
+        .scroll-item {
+            flex: 0 0 auto;
+            width: 260px;
+            height: 340px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            will-change: transform;
+        }
+
+        .scroll-item:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .scroll-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Стрелки */
+        .scroll-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
+            color: var(--primary);
+            outline: none;
+        }
+
+        .scroll-arrow:hover {
+            background: #D4AF37;
+            color: var(--primary);
+            border-color: #D4AF37;
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .scroll-arrow-left {
+            left: 8px;
+        }
+
+        .scroll-arrow-right {
+            right: 8px;
+        }
+
+        .scroll-indicator-bar {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            animation: pulse-indicator 2s ease-in-out infinite;
+        }
+
+        .scroll-indicator-bar span {
+            display: inline-block;
+            padding: 4px 16px;
+            background: rgba(212, 175, 55, 0.08);
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        @keyframes pulse-indicator {
+            0%, 100% { opacity: 0.6; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(6px); }
+        }
+
+        /* ===== 8. RSVP ===== */
+        .modern-form {
+            background: var(--card);
+            padding: 28px 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            background: var(--bg);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .drinks-section {
+            margin: 16px 0;
+        }
+
+        .drinks-section h3 {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .drinks-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .drink-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            background: var(--bg);
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .drink-option:hover {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.04);
+        }
+
+        .drink-option input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #D4AF37;
+        }
+
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            background: #D4AF37;
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        /* ===== 9. CONTACTS ===== */
+        .contacts-card {
+            background: var(--card);
+            padding: 20px 24px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow);
+            margin-top: 5px;
+        }
+
+        .contacts-text {
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .person-info strong {
+            display: block;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .person-info a {
+            color: #59191f;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .person-info a:hover {
+            text-decoration: underline;
+            color: #D4AF37;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg);
+            color: var(--primary);
+            transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+
+        .social-link:hover {
+            background: #D4AF37;
+            color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2);
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary);
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-content p {
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        .footer-names {
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
+            color: #D4AF37;
+        }
+
+        .footer-copy {
+            font-size: 0.7rem;
+            opacity: 0.4;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .schedule-timeline::before {
+                left: 8px;
+                transform: none;
+            }
+
+            .schedule-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                padding-left: 24px;
+            }
+
+            .schedule-item::after {
+                left: 8px;
+                transform: translateY(-50%);
+            }
+
+            .schedule-time {
+                width: auto;
+                text-align: left;
+                padding-right: 0;
+            }
+
+            .schedule-desc {
+                width: auto;
+                padding-left: 0;
+            }
+
+            .scroll-item {
+                width: 200px;
+                height: 280px;
+            }
+
+            .scroll-arrow {
+                display: none;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .drinks-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .collage-grid {
+                grid-auto-rows: 55px;
+                gap: 6px;
+            }
+
+            .photo-card {
+                border-width: 2px;
+            }
+
+            .nach h1 {
+                font-size: 2.2rem;
+            }
+
+            .timer-item {
+                min-width: 60px;
+                padding: 12px 14px;
+            }
+
+            .timer-item span {
+                font-size: 1.6rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            .scroll-item {
+                width: 160px;
+                height: 220px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -19,28 +976,30 @@
     </div>
 </div>
 
-<!-- ===== 0. COLLAGE PAGE (Первая страница с хаотичными фото) ===== -->
+<!-- ===== 0. COLLAGE PAGE (Первая страница с фото) ===== -->
 <section id="collage-page">
     <div class="collage-container">
         <div class="collage-label"><p><strong>Wedding</strong></p></div>
         
         <div class="collage-grid">
-            <!-- 12 фотографий в хаотичном порядке -->
-            <div class="photo-card" style="background-image: url('Images/r1.webp');"></div>
-            <div class="photo-card" style="background-image: url('Images/k2.webp');"></div>
-            
+            <!-- Изображения вместо background-image (с lazy loading) -->
+            <img src="Images/r1.webp" alt="Фото 1" class="photo-card" loading="lazy" width="300" height="400" decoding="async">
+            <img src="Images/k2.webp" alt="Фото 2" class="photo-card" loading="lazy" width="300" height="400" decoding="async">
         </div>
+
         <div class="container">
-                <div class="txtcol"><p>Узнали этих карапузов?<br>
-                                    Да-да, это мы!<br>
-                                    Время летит так быстро, представляете?<br>
-                                    И вот мы повзрослели, кажется пришло время создать свою семью.<br></p>
-                </div>
+            <div class="txtcol"><p>Узнали этих карапузов?<br>
+                                Да-да, это мы!<br>
+                                Время летит так быстро, представляете?<br>
+                                И вот мы повзрослели, кажется пришло время создать свою семью.<br></p>
             </div>
-        <div class="collage-grid">
-            <div class="photo-card" style="background-image: url('Images/k1.webp');"></div>
-            <div class="photo-card" style="background-image: url('Images/r2.webp');"></div>
         </div>
+
+        <div class="collage-grid">
+            <img src="Images/k1.webp" alt="Фото 3" class="photo-card" loading="lazy" width="300" height="400" decoding="async">
+            <img src="Images/r2.webp" alt="Фото 4" class="photo-card" loading="lazy" width="300" height="400" decoding="async">
+        </div>
+
         <button class="collage-btn" id="openInvitationBtn">
             💌 Открыть приглашение
         </button>
@@ -53,8 +1012,8 @@
 <!-- ===== 1. HERO ===== -->
 <section id="hero">
     <div class="hero-bg">
+        <img src="Images/fon.webp" alt="" class="hero-img" width="1920" height="1080" decoding="async">
         <div class="hero-overlay"></div>
-        <img src="Images/fon.webp" decoding="async" loading="lazy" alt="Свадебный фон" class="hero-img">
     </div>
     <div class="hero-content">
         <div class="hero-label">Save the Date</div>
@@ -74,7 +1033,7 @@
 <br>Приглашаем Вас присоединиться к нашей свадьбе и украсить ее своим присутствием!</h1></div>
         <div class="section-label"></div>
         <div class="kalend">
-            <div class="kali"><img src="Images/kal.webp" decoding="async" loading="lazy" alt="Женский образ"></div>
+            <img src="Images/kal.webp" alt="Календарь" loading="lazy" width="400" height="300" decoding="async">
         </div>
     </div>
 </section>
@@ -82,7 +1041,6 @@
 <!-- ===== 3. COUNTDOWN ===== -->
 <section id="countdown" class="section reveal">
     <div class="container">
-        
         <h2>До нашей свадьбы</h2>
         <div id="timer">
             <div class="timer-item">
@@ -108,7 +1066,6 @@
 <!-- ===== 4. VENUE ===== -->
 <section id="venue" class="section reveal">
     <div class="container">
-        
         <h2>Место проведения</h2>
         <div class="venue-card">
             <div class="venue-info">
@@ -120,7 +1077,7 @@
                 </a>
             </div>
             <div class="venue-map">
-                <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A77c409469642199302ed802f5d76ac9ea6f092bbc08ba5e94b8533f049d9e897&amp;source=constructor" decoding="async" loading="lazy" width="100%" height="200" frameborder="0"></iframe>
+                <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A77c409469642199302ed802f5d76ac9ea6f092bbc08ba5e94b8533f049d9e897&amp;source=constructor" loading="lazy" width="100%" height="200" frameborder="0" allowfullscreen=""></iframe>
             </div>
         </div>
     </div>
@@ -160,7 +1117,6 @@
                     <small>Выкуп первого кусочка</small>
                 </div>
             </div>
-            
             <div class="schedule-item">
                 <div class="schedule-time">22:00</div>
                 <div class="schedule-desc">
@@ -187,7 +1143,7 @@
         <p class="dress-sub"><strong>Нам будет очень приятно,<br>если ваш наряд будет<br>соответствовать цветовой гамме<br>нашей свадьбы</strong></p>
         <div class="color-palette">
             <div>
-                <div class="color"><img src="Images/color.webp" decoding="async" loading="lazy" alt="Цветовая гамма"></div>
+                <img src="Images/color.webp" alt="Цветовая гамма" loading="lazy" width="350" height="200" decoding="async">
             </div>
         </div>
         <div class="dress">
@@ -210,13 +1166,13 @@
             </button>
             <div class="scroll-container" id="scroll-container-1">
                 <div class="scroll-track">
-                    <div class="scroll-item"><img src="Images/w1.webp" decoding="async" loading="lazy" alt="Фото 1"></div>
-                    <div class="scroll-item"><img src="Images/w21.webp" decoding="async" loading="lazy" alt="Фото 2"></div>
-                    <div class="scroll-item"><img src="Images/w31.webp" decoding="async" loading="lazy" alt="Фото 3"></div>
-                    <div class="scroll-item"><img src="Images/w4.webp" decoding="async" loading="lazy" alt="Фото 4"></div>
-                    <div class="scroll-item"><img src="Images/w51.webp" decoding="async" loading="lazy" alt="Фото 5"></div>
-                    <div class="scroll-item"><img src="Images/w61.webp" decoding="async" loading="lazy" alt="Фото 6"></div>
-                    <div class="scroll-item"><img src="Images/w71.webp" decoding="async" loading="lazy" alt="Фото 7"></div>
+                    <div class="scroll-item"><img src="Images/w1.webp" alt="Образ 1" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w21.webp" alt="Образ 2" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w31.webp" alt="Образ 3" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w4.webp" alt="Образ 4" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w51.webp" alt="Образ 5" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w61.webp" alt="Образ 6" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/w71.webp" alt="Образ 7" loading="lazy" width="260" height="340" decoding="async"></div>
                 </div>
             </div>
             <button class="scroll-arrow scroll-arrow-right" aria-label="Следующее фото">
@@ -241,13 +1197,13 @@
             </button>
             <div class="scroll-container" id="scroll-container-2">
                 <div class="scroll-track">
-                    <div class="scroll-item"><img src="Images/m11.webp" decoding="async" loading="lazy" alt="Фото 7"></div>
-                    <div class="scroll-item"><img src="Images/m21.webp" decoding="async" loading="lazy" alt="Фото 8"></div>
-                    <div class="scroll-item"><img src="Images/m31.webp" decoding="async" loading="lazy" alt="Фото 9"></div>
-                    <div class="scroll-item"><img src="Images/m41.webp" decoding="async" loading="lazy" alt="Фото 10"></div>
-                    <div class="scroll-item"><img src="Images/m61.webp" decoding="async" loading="lazy" alt="Фото 12"></div>
-                    <div class="scroll-item"><img src="Images/m71.webp" decoding="async" loading="lazy" alt="Фото 12"></div>
-                    <div class="scroll-item"><img src="Images/m81.webp" decoding="async" loading="lazy" alt="Фото 12"></div>
+                    <div class="scroll-item"><img src="Images/m11.webp" alt="Образ 1" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m21.webp" alt="Образ 2" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m31.webp" alt="Образ 3" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m41.webp" alt="Образ 4" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m61.webp" alt="Образ 5" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m71.webp" alt="Образ 6" loading="lazy" width="260" height="340" decoding="async"></div>
+                    <div class="scroll-item"><img src="Images/m81.webp" alt="Образ 7" loading="lazy" width="260" height="340" decoding="async"></div>
                 </div>
             </div>
             <button class="scroll-arrow scroll-arrow-right" aria-label="Следующее фото">
@@ -288,17 +1244,15 @@
                 <textarea rows="2" placeholder="Иванов Иван, Петрова Мария..."></textarea>
             </div>
             
-            <!-- ====== ИСПРАВЛЕННЫЕ ЧЕКБОКСЫ ====== -->
-            <!-- ВАЖНО: value должен ТОЧНО совпадать с вариантами в Google Form! -->
             <div class="drinks-section">
                 <h3>Предпочтения по напиткам</h3>
                 <div class="drinks-grid">
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Шампанское"><span> Шампанское</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино красное"><span> Вино красное</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино белое"><span> Вино белое</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Виски"><span> Виски</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Коньяк"><span> Коньяк</span></label>
-                    <label class="drink-option"><input type="checkbox" name="drinks" value="Водка"><span> Водка</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Шампанское"><span>Шампанское</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино красное"><span>Вино красное</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Вино белое"><span>Вино белое</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Виски"><span>Виски</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Коньяк"><span>Коньяк</span></label>
+                    <label class="drink-option"><input type="checkbox" name="drinks" value="Водка"><span>Водка</span></label>
                 </div>
             </div>
             
@@ -316,17 +1270,15 @@
         <h2>Контакты</h2>
         <div class="contacts-card">
             <p class="contacts-text">Если у вас возникли вопросы, или вы готовите творческий подарок, свяжитесь заранее с нашим организатором</p>
-            <div class="contact-person">
-                <div class="person-info">
-                    <strong>Тепеева Юлия</strong>
-                    <a href="tel:+79276221549">+7 (927) 622-15-49</a>
-                </div>
+            <div class="person-info">
+                <strong>Тепеева Юлия</strong>
+                <a href="tel:+79276221549">+7 (927) 622-15-49</a>
             </div>
             <div class="social-icons">
-                <a href="https://www.instagram.com/tobeloved_events" target="_blank" class="social-link">
+                <a href="https://www.instagram.com/tobeloved_events" target="_blank" class="social-link" aria-label="Instagram">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1"/></svg>
                 </a>
-                <a href="https://t.me/tobeloved_events" target="_blank" class="social-link">
+                <a href="https://t.me/tobeloved_events" target="_blank" class="social-link" aria-label="Telegram">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                 </a>
             </div>
@@ -347,6 +1299,322 @@
 
 </div><!-- /main-content -->
 
-<script src="script.js"></script>
+<script>
+// ===================== ОПТИМИЗИРОВАННЫЙ JAVASCRIPT =====================
+// Минимум кода, максимум производительности
+
+// Кэшируем селекторы (избегаем повторных поисков в DOM)
+var preloader = document.getElementById('preloader');
+var openBtn = document.getElementById('openInvitationBtn');
+var collagePage = document.getElementById('collage-page');
+var mainContent = document.getElementById('main-content');
+var rsvpForm = document.getElementById('rsvp-form');
+var timerEl = document.getElementById('timer');
+var weddingDate = new Date("2026-08-08T15:00:00").getTime();
+
+// ===================== PRELOADER =====================
+window.addEventListener('load', function() {
+    if (preloader) {
+        preloader.classList.add('hidden');
+        setTimeout(function() {
+            preloader.style.display = 'none';
+        }, 600);
+    }
+});
+
+// ===================== COLLAGE → MAIN CONTENT =====================
+if (openBtn) {
+    openBtn.addEventListener('click', function() {
+        if (collagePage && mainContent) {
+            collagePage.classList.add('hidden-page');
+            setTimeout(function() {
+                collagePage.style.display = 'none';
+                mainContent.style.display = 'block';
+                updateTimer();
+                initRevealAnimations();
+                initGalleries();
+            }, 600);
+        }
+    });
+}
+
+// ===================== COUNTDOWN TIMER (оптимизированный) =====================
+function updateTimer() {
+    var now = new Date().getTime();
+    var distance = weddingDate - now;
+
+    if (!timerEl) return;
+
+    if (distance < 0) {
+        timerEl.innerHTML = "<h3 style='color:#D4AF37;'>Свадьба состоялась! 💍</h3>";
+        return;
+    }
+
+    var days = Math.floor(distance / 86400000);
+    var hours = Math.floor((distance % 86400000) / 3600000);
+    var minutes = Math.floor((distance % 3600000) / 60000);
+    var seconds = Math.floor((distance % 60000) / 1000);
+
+    var pad = function(n) { return n < 10 ? '0' + n : n; };
+    
+    var daysEl = document.getElementById('days');
+    var hoursEl = document.getElementById('hours');
+    var minutesEl = document.getElementById('minutes');
+    var secondsEl = document.getElementById('seconds');
+
+    if (daysEl) daysEl.innerText = pad(days);
+    if (hoursEl) hoursEl.innerText = pad(hours);
+    if (minutesEl) minutesEl.innerText = pad(minutes);
+    if (secondsEl) secondsEl.innerText = pad(seconds);
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+// ===================== REVEAL ON SCROLL (оптимизированный) =====================
+var revealObserver;
+
+function initRevealAnimations() {
+    var revealElements = document.querySelectorAll('.section.reveal');
+
+    if (revealObserver) {
+        revealObserver.disconnect();
+    }
+
+    revealObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                // Не отписываемся от наблюдения для экономии
+            }
+        });
+    }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    revealElements.forEach(function(el) {
+        revealObserver.observe(el);
+    });
+}
+
+initRevealAnimations();
+
+// ===================== ГОРИЗОНТАЛЬНЫЕ ГАЛЕРЕИ (минимальная версия) =====================
+function initGalleries() {
+    var galleries = ['scroll-container-1', 'scroll-container-2'];
+    
+    galleries.forEach(function(id) {
+        var container = document.getElementById(id);
+        if (!container) return;
+
+        var wrapper = container.closest('.scroll-wrapper');
+        if (!wrapper) return;
+
+        var leftBtn = wrapper.querySelector('.scroll-arrow-left');
+        var rightBtn = wrapper.querySelector('.scroll-arrow-right');
+
+        if (leftBtn) {
+            leftBtn.addEventListener('click', function() {
+                container.scrollLeft -= 280;
+            });
+        }
+
+        if (rightBtn) {
+            rightBtn.addEventListener('click', function() {
+                container.scrollLeft += 280;
+            });
+        }
+
+        // Обновляем стрелки при скролле
+        container.addEventListener('scroll', function() {
+            updateScrollArrows(container, leftBtn, rightBtn);
+        });
+
+        updateScrollArrows(container, leftBtn, rightBtn);
+    });
+}
+
+function updateScrollArrows(container, leftBtn, rightBtn) {
+    if (leftBtn) {
+        leftBtn.style.opacity = container.scrollLeft <= 1 ? '0.3' : '1';
+        leftBtn.style.pointerEvents = container.scrollLeft <= 1 ? 'none' : 'auto';
+    }
+    
+    if (rightBtn) {
+        var maxScroll = container.scrollWidth - container.clientWidth;
+        rightBtn.style.opacity = container.scrollLeft >= maxScroll - 1 ? '0.3' : '1';
+        rightBtn.style.pointerEvents = container.scrollLeft >= maxScroll - 1 ? 'none' : 'auto';
+    }
+}
+
+initGalleries();
+
+// ===================== GOOGLE FORMS ИНТЕГРАЦИЯ =====================
+var GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScFII1N40AiFMUT9d74UJ6y8xB32XOckMBdR_iRVsPaSC9FQA/formResponse';
+
+var FORM_ENTRIES = {
+    firstName:   'entry.304578524',
+    lastName:    'entry.1743062081',
+    phone:       'entry.1808915097',
+    guestsCount: 'entry.1990473099',
+    guestsNames: 'entry.1154442462',
+    drinks:      'entry.137658426'
+};
+
+if (rsvpForm) {
+    rsvpForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var inputs = rsvpForm.querySelectorAll('input[type="text"]');
+        var firstName = inputs[0] ? inputs[0].value.trim() : '';
+        var lastName = inputs[1] ? inputs[1].value.trim() : '';
+        
+        var phoneInput = rsvpForm.querySelector('input[type="tel"]');
+        var phone = phoneInput ? phoneInput.value.trim() : '';
+        
+        var guestsCountInput = rsvpForm.querySelector('input[type="number"]');
+        var guestsCount = guestsCountInput ? guestsCountInput.value.trim() : '0';
+        
+        var guestsNamesInput = rsvpForm.querySelector('textarea');
+        var guestsNames = guestsNamesInput ? guestsNamesInput.value.trim() : '';
+
+        var checkboxes = rsvpForm.querySelectorAll('input[name="drinks"]:checked');
+        var drinks = [];
+        checkboxes.forEach(function(cb) {
+            drinks.push(cb.value);
+        });
+
+        var formData = {
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            guestsCount: guestsCount || '0',
+            guestsNames: guestsNames,
+            drinks: drinks
+        };
+
+        submitForm(formData, rsvpForm);
+    });
+}
+
+function submitForm(data, form) {
+    var btn = form.querySelector('.submit-btn');
+    var originalHTML = btn.innerHTML;
+
+    btn.innerHTML = '⏳ Отправка...';
+    btn.style.background = '#64748B';
+    btn.disabled = true;
+
+    var iframeName = 'form-iframe-' + Date.now();
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    var hiddenForm = document.createElement('form');
+    hiddenForm.method = 'POST';
+    hiddenForm.action = GOOGLE_FORM_URL;
+    hiddenForm.target = iframeName;
+    hiddenForm.style.display = 'none';
+
+    var addField = function(name, value) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        hiddenForm.appendChild(input);
+    };
+
+    addField(FORM_ENTRIES.firstName, data.firstName);
+    addField(FORM_ENTRIES.lastName, data.lastName);
+    addField(FORM_ENTRIES.phone, data.phone);
+    addField(FORM_ENTRIES.guestsCount, data.guestsCount);
+    addField(FORM_ENTRIES.guestsNames, data.guestsNames);
+
+    if (data.drinks && data.drinks.length > 0) {
+        data.drinks.forEach(function(drink) {
+            addField(FORM_ENTRIES.drinks, drink);
+        });
+    }
+
+    document.body.appendChild(hiddenForm);
+
+    var isSubmitted = false;
+    var loadCount = 0;
+
+    var handleSuccess = function() {
+        if (isSubmitted) return;
+        isSubmitted = true;
+
+        btn.innerHTML = '✅ Отправлено!';
+        btn.style.background = '#22C55E';
+
+        showToast('Спасибо! Ваш ответ записан ❤️');
+
+        form.reset();
+
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.disabled = false;
+        }, 3000);
+
+        setTimeout(function() {
+            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+            if (hiddenForm.parentNode) hiddenForm.parentNode.removeChild(hiddenForm);
+        }, 5000);
+    };
+
+    iframe.onload = function() {
+        loadCount++;
+        if (loadCount >= 2) handleSuccess();
+    };
+
+    setTimeout(function() {
+        if (!isSubmitted) handleSuccess();
+    }, 4000);
+
+    try {
+        hiddenForm.submit();
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        btn.innerHTML = '❌ Ошибка';
+        btn.style.background = '#EF4444';
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.disabled = false;
+        }, 3000);
+    }
+}
+
+// ===================== TOAST УВЕДОМЛЕНИЕ =====================
+function showToast(message) {
+    var oldToast = document.querySelector('.custom-toast');
+    if (oldToast) oldToast.remove();
+
+    var toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    toast.innerHTML = message;
+    toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:16px 28px;border-radius:12px;font-size:15px;text-align:center;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,0.3);max-width:90%;animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards;';
+
+    document.body.appendChild(toast);
+
+    setTimeout(function() {
+        if (toast.parentNode) toast.remove();
+    }, 3200);
+}
+
+// Добавляем CSS анимации для toast
+if (!document.getElementById('toast-animations')) {
+    var style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(20px);}}';
+    document.head.appendChild(style);
+}
+</script>
+
 </body>
 </html>
